@@ -1,0 +1,20 @@
+import socket
+import webbrowser
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(("127.0.0.1", 5556))
+msg = input("Client says: ")
+client_socket.sendall(msg.encode())
+
+print("Waiting for server reply...\n")
+while True:
+    try:
+        reply = client_socket.recv(1024).decode()
+        if not reply:
+            break
+        print(reply.strip())
+        url = reply.split("->")[-1].strip()
+        webbrowser.open(url) 
+    except:
+        break
+print("Done.")
+client_socket.close()
