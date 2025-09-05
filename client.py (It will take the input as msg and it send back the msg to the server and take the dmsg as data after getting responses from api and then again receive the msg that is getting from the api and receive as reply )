@@ -1,0 +1,45 @@
+import tkinter as tk
+import socket
+import threading
+import webbrowser
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(("127.0.0.1", 5556))
+root = tk.Tk()
+root.title("YouTube Song Client")
+root.geometry("600x300")
+chat_box = tk.Text(root, state="disabled", wrap="word")
+chat_box.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+entry1 = tk.Entry(root)
+entry1.pack(padx=10, pady=10, fill=tk.X)
+def log_message(msg):
+    chat_box.config(state="normal")
+    chat_box.insert(tk.END, msg + "\n")
+    chat_box.config(state="disabled")
+    chat_box.see(tk.END)
+def send_message(event=None):
+    msg = entry1.get().strip()
+    if msg:
+        log_message(f"You: {msg}")
+        client_socket.sendall(msg.encode())
+        entry1.delete(0, tk.END)
+def receive_messages():
+    while True:
+        try:
+            reply = client_socket.recv(1024).decode()
+            if not reply:
+                break
+            log_message(f"Server: {reply}")
+            if "->" in reply:
+                url = reply.split("->")[-1].strip()
+                webbrowser.open_new_tab(url)
+        except Exception as e:
+            log_message(f"Connection error: {e}")
+            break
+button=tk.Button(root,text="Send",
+command=send_message)
+button.pack()
+entry1.bind("<Return>", send_message)
+threading.Thread(target=receive_messages, daemon=True).start()
+
+root.mainloop()
+client_socket.close()
